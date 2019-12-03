@@ -1,0 +1,15 @@
+<cell>
+    <div if="{ !editMode }" onclick="{ toggleEditMode }">{ props.note[props.item] }</div>
+    <input if="{ editMode }" {...props.input} value="{ props.note[props.item] }" />
+
+
+    <script>
+        export default {
+            editMode: false,
+            toggleEditMode(){
+                this.editMode = !this.editMode;
+                this.update();
+            }
+        }
+    </script>
+</cell>

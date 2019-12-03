@@ -1,0 +1,96 @@
+<product-table>
+    <table class="table table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Название</th>
+                <th scope="col" style="width: 85px;">Цена</th>
+                <th scope="col" style="width: 85px;">Количество</th>
+                <th scope="col" style="width: 125px;">Стоимость</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr each="{ (item, i) in database }">
+                <td is="cell" note="{ item }" item="name" input="{ nameInputAttrs }" onclick="{ disableAddMode }"/>
+                <td is="cell" note="{ item }" item="price" input="{ priceInputAttrs }" onclick="{ disableAddMode }"/>
+                <td is="cell" note="{ item }" item="count" input="{ countInputAttrs }" onclick="{ disableAddMode }"/>
+                <td>{ item.price * item.count }
+                    <button type="button" class="close mr-n5" onclick="{ remove }"><span data-num="{ i }">&times;</span></button>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <form onsubmit="{ add }">
+                <tr if="{ addMode }">
+                    <td><input name="name" { ...nameInputAttrs }></td>
+                    <td><input name="price" { ...priceInputAttrs }></td>
+                    <td><input name="count" { ...countInputAttrs }></td>
+                    <td>
+                        <button type="submit" class="btn btn-outline-primary">Добавить</button>
+                        <button type="button" class="close mr-n5" onclick="{ disableAddMode }"><span aria-hidden="true">&times;</span></button>
+                    </td>
+                </tr>
+                <tr if="{ !addMode }">
+                    <td colspan="4"><button class="btn btn-outline-primary btn-block" onclick="{ enableAddMode }">Добавить новую строку</button></td>
+                </tr>
+            </form>
+        </tfoot>
+    </table>
+
+
+    <script>
+        export default {
+            nameInputAttrs: {
+                type: "text",
+                class: "form-control",
+                required: true
+            },
+            priceInputAttrs: {
+                type: "text",
+                class: "form-control",
+                required: true,
+                pattern: "\\d+([,\\.]\\d{1,2})?"
+            },
+            countInputAttrs: {
+                type: "number",
+                class: "form-control",
+                required: true
+            },
+            onBeforeMount(props, state){
+                this.database = [{name: 1, price: 2, count: 3}]; //TODO: backup from localStorage
+                this.addMode = false;
+            },
+            add(e){
+                e.preventDefault();
+                //console.log(e);
+                let note = ["name", "price", "count"]
+                    .map(s => {
+                        let el = e.target[s];
+                        let obj = {[s]: el.value};
+                        el.value = "";
+                        return obj;
+                    }).reduce(Object.assign);
+                note.price = note.price.replace(",", ".");
+                this.database.push(note);
+                e.target.name.focus();
+                //console.log(note);
+
+                // TODO: save to localStorage
+                this.update();
+                return false;
+            },
+            remove(e){
+                this.database.splice(e.target.dataset.num, 1);
+                // TODO: save to localStorage
+                this.update();
+            },
+            enableAddMode(){
+                this.addMode = true;
+                this.update();
+            },
+            disableAddMode(){
+                this.addMode = false;
+                this.update();
+            }
+        }
+    </script>
+</product-table>
