@@ -1,6 +1,6 @@
 <cell>
     <div if="{ !editMode }" onclick="{ toggleEditMode }">{ props.note[props.item] }</div>
-    <input if="{ editMode }" {...props.input} value="{ props.note[props.item] }" />
+    <input if="{ editMode }" {...props.input} value="{ props.note[props.item] }" onkeyup="{ keyUp }"/>
 
 
     <script>
@@ -9,6 +9,14 @@
             toggleEditMode(){
                 this.editMode = !this.editMode;
                 this.update();
+            },
+            keyUp(e){
+                if(e.which === 13 && e.target.validity.valid){
+                    this.props.note[this.props.item] = e.target.value;
+                    // may be there call some "save" function from table? we must call parent update here....
+                    this.props.save();
+                    this.toggleEditMode();
+                }
             }
         }
     </script>
