@@ -1,15 +1,45 @@
 <product-table>
-    <div class="row bg">
-        <h4 class="col-6 p-3">Название</h4>
-        <h4 class="col-2 p-3">Цена</h4>
-        <h4 class="col-2 p-3">Количество</h4>
-        <h4 class="col-2 p-3">Стоимость</h4>
+    <div is="filter" db="{ database }" save="{ saveAndUpdate }"></div>
+    <div id="table-header" class="row bg">
+        <h4 is="sorter"
+            class="col-6 p-3"
+            db="{ database }"
+            field="name"
+            compareFunc="{ (a, b) => a.localeCompare(b) }"
+            transformFunc="{ a => a.toLowerCase() }"
+            save="{ saveAndUpdate }"
+        >Название</h4>
+        <h4 is="sorter"
+            class="col-2 p-3"
+            db="{ database }"
+            field="price"
+            compareFunc="{ (a, b) => a - b }"
+            save="{ saveAndUpdate }"
+        >Цена</h4>
+        <h4 is="sorter"
+            class="col-2 p-3"
+            db="{ database }"
+            field="count"
+            compareFunc="{ (a, b) => a - b }"
+            save="{ saveAndUpdate }"
+        >Количество</h4>
+        <h4 is="sorter"
+            class="col-2 p-3"
+            db="{ database }"
+            field="cost"
+            compareFunc="{ (a, b) => a - b }"
+            save="{ saveAndUpdate }"
+        >Стоимость</h4>
     </div>
-    <div class="row border-top" each="{ (item, i) in database }">
-        <div class="col-6 p-3" is="cell" note="{ item }" item="name" input="{ nameInputAttrs }" save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
-        <div class="col-2 p-3" is="cell" note="{ item }" item="price" input="{ priceInputAttrs }" save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
-        <div class="col-2 p-3" is="cell" note="{ item }" item="count" input="{ countInputAttrs }" save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
-        <div class="col-2 p-3">{ item.price * item.count }
+    <div class="row border-top" each="{ (item, i) in database }" if="{ item.show }">
+        <!-- было бы явно логичнее, если бы ячейки сами говорили, что открылись (для закрытия остальных) и так же говорили всем, что информация обновлена, чтобы сохраняться уже тут-->
+        <div class="col-6 p-3" is="cell" note="{ item }" item="name" input="{ nameInputAttrs }"
+             save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
+        <div class="col-2 p-3" is="cell" note="{ item }" item="price" input="{ priceInputAttrs }"
+             save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
+        <div class="col-2 p-3" is="cell" note="{ item }" item="count" input="{ countInputAttrs }"
+             save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
+        <div class="col-2 p-3">{ item.cost }
             <button type="button" class="close mr-n5" onclick="{ remove }"><span data-num="{ i }">&times;</span></button>
         </div>
         <hr>
@@ -35,24 +65,31 @@
             nameInputAttrs: {
                 type: "text",
                 class: "form-control",
-                required: true
+                required: true,
+                autocomplete: "off"
             },
             priceInputAttrs: {
                 type: "text",
                 class: "form-control",
                 required: true,
-                pattern: "\\d+([,\\.]\\d{1,2})?"
+                pattern: "\\d+([,\\.]\\d{1,2})?",
+                autocomplete: "off"
             },
             countInputAttrs: {
                 type: "number",
                 class: "form-control",
-                required: true
+                required: true,
+                autocomplete: "off"
             },
             onBeforeMount(props, state){
                 //this.database = [{name: 1, price: 2, count: 3}];
                 this.load();
                 this.addMode = false;
             },
+            onBeforeUpdate(){
+                // calculateCosts ?
+            },
+
             add(e){
                 e.preventDefault();
                 //console.log(e);
@@ -62,8 +99,10 @@
                         let obj = {[s]: el.value};
                         el.value = "";
                         return obj;
-                    }).reduce(Object.assign, {});
+                    }).reduce((a,b) => Object.assign(a,b), {});
                 note.price = note.price.replace(",", ".");
+                note.show = true;
+                console.log(note);
                 this.database.push(note);
                 e.target.name.focus();
 
@@ -74,6 +113,7 @@
                 this.database.splice(e.target.dataset.num, 1);
                 this.saveAndUpdate();
             },
+
             enableAddMode(){
                 this.addMode = true;
                 this.update();
@@ -82,7 +122,13 @@
                 this.addMode = false;
                 this.update();
             },
+
+            calculateCosts(){
+                // TODO: Math.round
+                for(let item of this.database) item.cost = item.price * item.count;
+            },
             save(){
+                this.calculateCosts();
                 localStorage.setItem('db', JSON.stringify(this.database));
             },
             saveAndUpdate(){

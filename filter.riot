@@ -1,0 +1,27 @@
+<filter>
+    <div class="form-group row">
+        <label for="filter" class="col-2 control-label">Поиск:</label>
+        <div class="col-8">
+            <input id="filter" type="text" placeholder="Введите для фильтрации по названию" class="form-control" oninput="{ filter }">
+        </div>
+        <button class="btn btn-block col-2 btn-success">Найти</button>
+    </div>
+
+    <script>
+        export default {
+            showAll(){
+                this.props.db.forEach(item => { item.show = true; })
+            },
+            onBeforeMount(){
+                this.showAll();
+            },
+            filter(e){
+                let find = e.target.value.toLowerCase();
+                console.log(find);
+                if(find === "") this.showAll();
+                else this.props.db.forEach(item => { item.show = item.name.toLowerCase().includes(find); });
+                this.props.save();
+            }
+        }
+    </script>
+</filter>

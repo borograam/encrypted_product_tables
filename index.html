@@ -18,6 +18,7 @@
     </head>
     <body>
     <div class="container">
+        <h3>Нечто</h3>
         <product-table></product-table>
     </div>
 
@@ -28,6 +29,8 @@
     <script src="https://cdn.jsdelivr.net/npm/riot@4/riot+compiler.min.js"></script>
     <script src="product-table.riot" type="riot"></script>
     <script src="cell.riot" type="riot"></script>
+    <script src="sorter.riot" type="riot"></script>
+    <script src="filter.riot" type="riot"></script>
     <script>
         riot.compile().then(() => {
             riot.mount('product-table');

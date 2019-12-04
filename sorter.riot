@@ -1,0 +1,44 @@
+<sorter class="{ props.class }" onclick="{ changeSortMode }">
+    <slot/>
+    <span if="{ sortMode === 1 }">&#9660;</span>
+    <span if="{ sortMode === 2 }">&#9650;</span>
+    <script>
+        export default {
+            sortMode: 0,
+            changeSortMode(e){
+                e.preventDefault();
+                //console.log(`sorter onclick from ${this.props.field}`);
+                //console.log(e);
+                this.sortMode = (this.sortMode % 2) + 1;
+                //console.log(this.sortMode);
+
+                let header = document.getElementById("table-header");
+                if(header.riotClean && header.riotClean.root !== this.root) header.riotClean.func();
+
+                if(this.sortMode === 0) this.update();
+                else {
+                    header.riotClean = {root: this.root, func: e => { this.sortMode = 0; }};
+                    if(this.sortMode === 1) this.sort();
+                    else this.sort(-1);
+                }
+                return false;
+            },
+            sort(multiplyCompare=1){
+                //console.log("DB: ", this.props.db);
+                let transform = this.props.transformFunc || (a => a);
+                let compare = this.props.compareFunc;
+
+                let temp = this.props.db
+                    .map((row, i) => ({value: transform(row[this.props.field]), i}));
+                temp.sort((a, b) => multiplyCompare * compare(a.value, b.value));
+                //console.log(temp);
+
+                let pointerKeeper = [];
+                for(let i in this.props.db) pointerKeeper[i] = this.props.db[i];
+                for(let i in this.props.db) this.props.db[i] = pointerKeeper[temp[i].i];
+
+                this.props.save();
+            }
+        }
+    </script>
+</sorter>
