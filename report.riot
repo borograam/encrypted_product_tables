@@ -1,0 +1,102 @@
+<report>
+    <button type="button" data-toggle="modal" data-target="#reportModal" class="btn btn-block btn-primary">Отчёт</button>
+    <div class="modal fade printable" id="reportModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="reportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportModelLabel">Товарная накладная</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <table border="1" cellpadding="3" cellspacing="0" class="text-center">
+                        <tr>
+                            <td rowspan="2">Номер по порядку</td>
+                            <td colspan="2">Товар</td>
+                            <td colspan="2">Единица измерения</td>
+                            <td rowspan="2">Вид упаковки</td>
+                            <td colspan="2">Количество</td>
+                            <td rowspan="2">Масса брутто</td>
+                            <td rowspan="2">Количество (масса нетто)</td>
+                            <td rowspan="2">Цена, руб. коп.</td>
+                            <td rowspan="2">Сумма без учета НДС, руб. коп.</td>
+                            <td colspan="2">НДС</td>
+                            <td rowspan="2">Сумма с учётом НДС, руб. коп.</td>
+                        </tr>el
+                        <tr>
+                            <td>Наименование, характеристика, сорт, артикул товара</td>
+                            <td>код</td>
+                            <td>наименование</td>
+                            <td>код по ОКЕЙ</td>
+                            <td>в одном месте</td>
+                            <td>мест, штук</td>
+                            <td>ставка, %</td>
+                            <td>сумма, руб. коп.</td>
+                        </tr>
+                        <tr>
+                            <td each="{ (item, i) in Array(15) }">{ i + 1 }</td>
+                        </tr>
+                        <tr each="{ (item, i) in shown }">
+                            <td class="text-left">{ i + 1 }</td>
+                            <td class="text-left">{ item.name }</td>
+                            <td></td>
+                            <td>шт.</td>
+                            <td class="text-left">796</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">{ item.count }</td>
+                            <td class="text-right">{ item.price }</td>
+                            <td class="text-right">{ item.cost }</td>
+                            <td>20</td>
+                            <td class="text-right">{ Math.floor(item.cost * 20) / 100 }</td>
+                            <td class="text-right">{ Math.floor(item.cost * 120) / 100 }</td>
+                        </tr>
+                        <tr class="font-weight-bold">
+                            <td colspan="7" class="text-right">Всего по накладной:</td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">{ totalCount }</td>
+                            <td class="text-right">&times;</td>
+                            <td class="text-right">{ totalCost }</td>
+                            <td>&times;</td>
+                            <td class="text-right">{ totalTax }</td>
+                            <td class="text-right">{ total }</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" onclick="{ printReport }">Распечатать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        export default {
+            onBeforeUpdate(){
+                this.shown = this.props.db.filter(item => item.show);
+                this.totalCount = this.shown.map(item => Number(item.count)).reduce((a,b)=>a+b);
+                this.totalCost = Math.floor(this.shown.map(item => Number(item.cost)).reduce((a,b)=>a+b)*100)/100;
+                this.totalTax = Math.floor(this.shown.map(item => Math.round(Number(item.cost) * 20)/100).reduce((a,b)=>a+b)*100)/100;
+                this.total = this.totalCost + this.totalTax;
+            },
+            printReport(e){
+                let newWindow = window.open();
+                newWindow.document.write("<link id=\"link\" rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css\" integrity=\"sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh\" crossorigin=\"anonymous\">");
+                newWindow.document.write(document.getElementById("modalBody").innerHTML);
+                newWindow.frames.eval(`
+                    document.getElementById('link').onload = e => {
+                        console.log("css loaded");
+                        window.print();
+                        window.close();
+                    };
+                `);
+            }
+        }
+    </script>
+</report>
