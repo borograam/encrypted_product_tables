@@ -1,6 +1,6 @@
 <product-table>
-    <div is="filter" db="{ database }" save="{ saveAndUpdate }"></div>
-    <div id="table-header" class="row bg">
+    <div is="filter" db="{ database }" save="{ saveAndUpdate }"></div> <!-- вставляем содержимое тэга filter.riot -->
+    <div id="table-header" class="row bg"> <!-- id="table-header" используется в sorter.riot . строка во всю ширину страницы -->
         <h4 is="sorter"
             class="col-6 p-3"
             db="{ database }"
@@ -9,13 +9,15 @@
             transformFunc="{ a => a.toLowerCase() }"
             save="{ saveAndUpdate }"
         >Название</h4>
+        <!-- Заголовок "Название" с монтированием тэга sorter.riot, передаём ему БД, сортировка по полю "name"
+        устанавливаем как преобраховывать и сравнивать строки. -->
         <h4 is="sorter"
             class="col-2 p-3"
             db="{ database }"
             field="price"
             compareFunc="{ (a, b) => a - b }"
             save="{ saveAndUpdate }"
-        >Цена</h4>
+        >Цена</h4> <!-- аналогично, поиск по "price" -->
         <h4 is="sorter"
             class="col-2 p-3"
             db="{ database }"
@@ -31,32 +33,37 @@
             save="{ saveAndUpdate }"
         >Стоимость</h4>
     </div>
-    <div class="row border-top" each="{ (item, i) in database }" if="{ item.show }">
-        <!-- было бы явно логичнее, если бы ячейки сами говорили, что открылись (для закрытия остальных) и так же говорили всем, что информация обновлена, чтобы сохраняться уже тут-->
+    <!-- следующий div создаётся для каждой записи в БД. Внутри используется item - это, собственно, сама запись -->
+    <div class="row border-top" each="{ (item, i) in database }" if="{ item.show }"> <!-- each - цикл по БД. If - не показывать строку, если мы воспользовались поиском и данная строка не подошла -->
         <div class="col-6 p-3" is="cell" note="{ item }" item="name" input="{ nameInputAttrs }"
              save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
         <div class="col-2 p-3" is="cell" note="{ item }" item="price" input="{ priceInputAttrs }"
              save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
         <div class="col-2 p-3" is="cell" note="{ item }" item="count" input="{ countInputAttrs }"
              save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
-        <div class="col-2 p-3">{ showCurrency(item.cost) }
+        <!-- три раза монтируем тэг cell.riot (он показывает текст, но умеет превращаться в поле ввода для изменения БД) -->
+        <div class="col-2 p-3">{ showCurrency(item.cost) } <!-- в столбце "Стоимость" показываем стоимость в рублях -->
             <button type="button" class="close" onclick="{ remove }"><span data-num="{ i }">&times;</span></button>
+            <!-- Добавляем кнопку. Выглядит в виде крестика. При нажатии вызывается функция remove -->
         </div>
-        <hr>
+        <hr> <!-- разделитель строк -->
     </div>
-    <form if="{ addMode }" onsubmit="{ add }">
+    <form if="{ addMode }" onsubmit="{ add }"> <!-- показывается при режиме добавления новой строки. -->
+        <!-- при правильном заполнении формы вызывается функция "add" -->
         <div class="row form-group">
-            <div class="col-6"><input name="name" { ...nameInputAttrs }></div>
+            <div class="col-6"><input name="name" { ...nameInputAttrs }></div> <!-- поля ввода -->
             <div class="col-2"><input name="price" { ...priceInputAttrs }></div>
             <div class="col-2"><input name="count" { ...countInputAttrs }></div>
             <div class="col-2">
+                <!-- кнопка "добавить" и крестик для выхода из режима добавления -->
                 <button type="submit" class="btn btn-outline-primary">Добавить</button>
                 <button type="button" class="close" onclick="{ disableAddMode }"><span aria-hidden="true">&times;</span></button>
             </div>
         </div>
     </form>
-    <div class="row" if="{ !addMode }">
+    <div class="row" if="{ !addMode }"> <!-- показываеься при выключенном режиме добавления -->
         <div class="col-12"><button class="btn btn-outline-primary btn-block" onclick="{ enableAddMode }">Добавить новую строку</button></div>
+        <!-- Кнопка во всю ширину страницы. При нажатии включается режим добавления -->
     </div>
 
 
@@ -66,82 +73,83 @@
         import Cell from "./cell.riot";
 
         export default {
-            components: {
+            components: { // используемые в данном тэге компоненты
                 Sorter, Filter, Cell
             },
-            nameInputAttrs: {
+            nameInputAttrs: { // атрибуты для поля ввода первого столбца (для cell.riot и режима добавления)
                 type: "text",
                 class: "form-control",
                 required: true,
                 autocomplete: "off"
             },
-            priceInputAttrs: {
+            priceInputAttrs: { // для второго
                 type: "text",
                 class: "form-control",
                 required: true,
                 pattern: "\\d+([,\\.]\\d{1,2})?",
                 autocomplete: "off"
             },
-            countInputAttrs: {
+            countInputAttrs: { // ...
                 type: "number",
                 class: "form-control",
                 required: true,
                 autocomplete: "off"
             },
-            onBeforeMount(props, state){
-                //this.database = [{name: 1, price: 2, count: 3}];
-                //this.load();
+            onBeforeMount(props, state){ // вызывается перед первым появлением (загрузка страницы)
                 this.addMode = false;
                 this.database = this.props.db;
             },
-            onBeforeUpdate(){
+            onBeforeUpdate(){ // вызывается перед каждым обновлением тэга
                 // calculateCosts ?
                 this.database = this.props.db;
             },
 
-            add(e){
-                e.preventDefault();
-                //console.log(e);
+            add(e){ // вызывается при onsubmit на форме в режиме добавления
+                e.preventDefault(); // говорим браузеру ничего не делать с данным событием
+
                 let note = ["name", "price", "count"]
                     .map(s => {
-                        let el = e.target[s];
-                        let obj = {[s]: el.value};
-                        el.value = "";
-                        return obj;
-                    }).reduce((a,b) => Object.assign(a,b), {});
-                note.price = Math.round(Number(note.price.replace(",", "."))*100);
-                note.count = Number(note.count);
-                note.show = true;
-                //console.log(note);
-                this.database.push(note);
-                e.target.name.focus();
+                        let el = e.target[s]; // каждое поле ввода
+                        let obj = {[s]: el.value}; // создание одноэлементного ассоциативного массива
+                        el.value = ""; // удалить значение из формы
+                        return obj; // выдаём объект
+                    }).reduce((a,b) => Object.assign(a,b), {}); // склеиваем одноэлементные массивы в один
+                note.price = Math.round(Number(note.price.replace(",", "."))*100); // заменяем запятые на точки в "Цене" и преобразуем в копейки
+                note.count = Number(note.count); // преобразуем в число "Количество"
+                note.show = true; // показываем в таблице
 
-                this.saveAndUpdate();
-                return false;
+                this.database.push(note); // добавляем объект в БД
+                e.target.name.focus(); // фокусируемся на поле "Название" в форме
+
+                this.saveAndUpdate(); // описана ниже. сохраняем и обновляем
+                return false; // необходимо вернуть false из обработчика события, чтобы браузер не пытался отправить форму
             },
-            remove(e){
-                this.database.splice(e.target.dataset.num, 1);
+            remove(e){ // вызывается при нажатии на крестик у элемента таблицы
+                this.database.splice(e.target.dataset.num, 1); // получает номер строки и удаляет её из БД
                 this.saveAndUpdate();
             },
 
-            enableAddMode(){
+            enableAddMode(){ // вызывается при нажатии на большую кнопку "Добавить новую строку"
                 this.addMode = true;
                 this.update();
             },
-            disableAddMode(){
+            disableAddMode(){ // вызывается при нажатии на крестик рядом с формой добавления новой строки
                 this.addMode = false;
                 this.update();
             },
 
-            calculateCosts(){
+            calculateCosts(){ // вспомогательная функция для высчитывания "Стоимости" во всей таблице
+
                 for(let item of this.database) item.cost = item.price * item.count;
+                // каждому элементу массива (БД) посчитать стоимость как произведение цены на количество.
             },
-            saveAndUpdate(){
+            saveAndUpdate(){ // вспомогательная функция
                 this.calculateCosts();
                 this.props.save();
+
             },
 
-            showCurrency(n){ // the same one in cell and report
+            showCurrency(n){ // превращение копеек в рубли. Такое же есть в cell.riot и почти такое же в report.riot
                 return `${parseInt(n/100)}${n%100 ? `.${n%100}` : ""}`;
             },
         }

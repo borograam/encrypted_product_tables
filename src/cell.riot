@@ -1,37 +1,38 @@
 <cell>
-    <div if="{ !editMode }" onclick="{ toggleEditMode }">{ value }</div>
-    <input if="{ editMode }" {...props.input} value="{ value }" onkeyup="{ keyUp }"/>
+    <div if="{ !editMode }" onclick="{ toggleEditMode }">{ value }</div><!-- изначально в коде страницы обозначаетя эта строчка, при нажатии стнаовится режим ввода на любую ячейку запскается тогл едит мод и перезаписывает едит мод-->
+    <input if="{ editMode }" {...props.input} value="{ value }" onkeyup="{ keyUp }"/><!-- так как едит тру, в вале значение, если например изменяем его, то прикаждом отпускании клавиши на клаве запускаетя функциякейап-->
 
-
+<!-- ячейка в таблице кроме значения стоимости -->
     <script>
         export default {
             editMode: false,
-            toggleEditMode(){
-                this.editMode = !this.editMode;
-                this.update();
+            toggleEditMode(){ // вызывается по нажатию на текст со значением
+                this.editMode = !this.editMode; // входим в режим редактирования
+                this.update(); // перерисуем данный тэг
             },
-            keyUp(e){
-                if(e.which === 13 && e.target.validity.valid){
-                    let value = e.target.value;
-                    if(this.props.item === "count"){
-                        value = Number(value);
-                    } else if(this.props.item === "price"){
+            keyUp(e){ // вызывается при отпускании клавиши клавиатуры в поле ввода
+                if(e.which === 13 && e.target.validity.valid){ // если клавиша - enter и значение в поле введено верно
+                    let value = e.target.value; // вытаскиваем значение из поля ввода
+                    if(this.props.item === "count"){ // если это "количество"
+                        value = Number(value); // преобразуем в число
+                    } else if(this.props.item === "price"){ // если же это "цена"
+                        // преобразуем запятые в точки и переводим в копейки
                         value = Math.round(Number(value.replace(",", "."))*100);
                     }
-                    this.props.note[this.props.item] = value;
-                    this.props.save();
-                    this.toggleEditMode();
+                    this.props.note[this.props.item] = value; // вписываем значение в базу данных
+                    this.props.save(); // сохраняем базу
+                    this.toggleEditMode(); // выключаем режим ввода
                 }
             },
-            showCurrency(n){
+            showCurrency(n){ // вспомогательная функция по получению рублей из копеек
                 return `${parseInt(n/100)}${n%100 ? `.${n%100}` : ""}`;
             },
-            onBeforeUpdate(){
-                this.value = this.props.note[this.props.item];
-                if(this.props.item === "price") this.value = this.showCurrency(this.value);
+            onBeforeUpdate(){ // выполняется перед каждым обновлением тэга
+                this.value = this.props.note[this.props.item]; // вытащим значение из базы данных
+                if(this.props.item === "price") this.value = this.showCurrency(this.value); // если это "цена" - используем вспомогательную функцию
             },
-            onBeforeMount(){
-                this.onBeforeUpdate();
+            onBeforeMount(){ // выполняется перед первым появлением тэга на странице
+                this.onBeforeUpdate(); // то же самое, что и перед каждый обновлением
             }
         }
     </script>

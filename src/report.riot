@@ -1,6 +1,8 @@
 <report>
+    <!-- Кнопка "Отчёт". Вызывает модальное окно с id reportModal средствами bootstrap -->
     <button type="button" data-toggle="modal" data-target="#reportModal" class="btn btn-block btn-primary">Отчёт</button>
-    <div class="modal fade printable" id="reportModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <!-- описание модального окна согласно документации bootstrap -->
+    <div class="modal fade" id="reportModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="reportModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -10,6 +12,7 @@
                     </button>
                 </div>
                 <div class="modal-body" id="modalBody">
+                    <!-- таблица, перерисованная из товарной накладной -->
                     <table border="1" cellpadding="3" cellspacing="0" class="text-center">
                         <tr>
                             <td rowspan="2">Номер по порядку</td>
@@ -37,7 +40,7 @@
                         <tr>
                             <td each="{ (item, i) in Array(15) }">{ i + 1 }</td>
                         </tr>
-                        <tr each="{ (item, i) in shown }">
+                        <tr each="{ (item, i) in shown }"> <!-- цикл по shown - те строки БД, которые сейчас видны -->
                             <td class="text-left">{ i + 1 }</td>
                             <td class="text-left">{ item.name }</td>
                             <td></td>
@@ -58,7 +61,7 @@
                             <td colspan="7" class="text-right">Всего по накладной:</td>
                             <td></td>
                             <td></td>
-                            <td class="text-right">{ totalCount }</td>
+                            <td class="text-right">{ totalCount }</td> <!-- Посчитана в onBeforeUpdate -->
                             <td class="text-right">&times;</td>
                             <td class="text-right">{ totalCost }</td>
                             <td>&times;</td>
@@ -68,6 +71,7 @@
                     </table>
                 </div>
                 <div class="modal-footer">
+                    <!-- кнопки. Закрыть выполняется средствами bootstrap, печать - вызов функции printReport -->
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
                     <button type="button" class="btn btn-primary" onclick="{ printReport }">Распечатать</button>
                 </div>
@@ -79,21 +83,31 @@
     <script>
         export default {
             onBeforeUpdate(){
+                // фильтруем массив(БД) по показывающимся в фильтре
                 this.shown = this.props.db.filter(item => item.show);
+                // считаем сумму "количество"
                 this.totalCount = this.shown.map(item => Number(item.count)).reduce((a,b)=>a+b, 0);
+                // считаем сумму Стоимостей (в копейках)
                 let totalCostNumber = this.shown.map(item => item.cost).reduce((a,b)=>a+b, 0);
+                // преобразуем в рубли
                 this.totalCost = this.showCurrency(totalCostNumber);
+                // считаем сумму НДС в копейках
                 let totalTaxNumber = this.shown.map(item => Math.round(item.cost * 0.2)).reduce((a,b)=>a+b, 0);
+                // преобразуем в рубли
                 this.totalTax = this.showCurrency(totalTaxNumber);
+                // считаем и преобразуем сумму с НДС
                 this.total = this.showCurrency(totalCostNumber + totalTaxNumber);
             },
-            onBeforeMount(){
+            onBeforeMount(){ // при открытии страницы сделать то же, что и в onBeforeMount
                 this.onBeforeUpdate();
             },
-            printReport(e){
-                let newWindow = window.open();
+            printReport(e){ // вызывается при нажатии на кнопку "Распечатать"
+                let newWindow = window.open(); //открыть новое окно
+                // присоединяем css библиотеку к новому окну
                 newWindow.document.write("<link id=\"link\" rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css\" integrity=\"sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh\" crossorigin=\"anonymous\">");
+                // пишем в документ нового окна содержимое модального (таблица)
                 newWindow.document.write(document.getElementById("modalBody").innerHTML);
+                // запускаем в новом окне код, который следит за успешным присоединением bootstrap, после чего он распечатает страницу и закроет себя
                 newWindow.frames.eval(`
                     document.getElementById('link').onload = e => {
                         console.log("css loaded");
@@ -102,7 +116,7 @@
                     };
                 `);
             },
-            showCurrency(n){
+            showCurrency(n){ // вспомогательная функция по превращению копеек в рубли
                 return `${parseInt(n/100)}.${parseInt((n%100)/10)}${n%10}`;
             },
         }

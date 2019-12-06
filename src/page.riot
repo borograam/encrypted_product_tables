@@ -1,16 +1,18 @@
 <page>
-    <div class="container-fluid">
+    <div class="container-fluid"> <!-- Контейнер во всю ширину документа -->
         <div class="row">
-            <nav class="col-md-3 bg-light sidebar">
+            <nav class="col-md-3 bg-light sidebar"> <!-- боковая панель -->
                 <div class="sidebar-sticky">
                     <h6 class="sidebar-heading px-3 mt-3 mb-1 text-muted">Таблицы</h6>
                     <ul class="nav flex-column nav-pills">
-                        <li class="nav-item" each="{ (item, i) in database }"> <!-- each -->
+                        <li class="nav-item" each="{ (item, i) in database }"> <!-- цикл по всем таблицам -->
+                            <!-- выставление класса active текущей выбранной таблице. При нажатии вызывается функция select -->
                             <a class="{ `nav-link ${i === currentIndex ? 'active' : ''}`}" href="#" onclick="{ select }" data-num="{ i }">
                                 { item.name }
                             </a>
                         </li>
 
+                        <!-- Дополнительный элемент списка "+" при нажатии на который вызывается функция add -->
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="{ add }">+</a>
                         </li>
@@ -18,21 +20,27 @@
                 </div>
             </nav>
             <main class="col-md-9">
+                <!-- если текущая таблица выбрана -->
                 <div if="{ currentIndex !== null }">
                     <div class="mb-4 row ">
+                        <!-- если режим изменения имени выключен -->
                         <a if="{ !nameEditing }" class="h1 col-lg-9">{ database[currentIndex].name }</a>
+                        <!-- если режим изменения имени включен, показывается поле ввода, при нажатии на клавиши клавиатуры вызывается функция renameInput -->
                         <div if="{ nameEditing }" class="h1 col-lg-9">
                             <input type="text" class="form-control" autocomplete="off" onkeyup="{ renameInput }" value="{ database[currentIndex].name }">
                         </div>
 
+                        <!-- кнопки удалить и переименовать прижимаются к правой границе окна -->
                         <div class="col-lg-3 h4 d-flex flex-row-reverse align-items-center">
                             <a href="#" class="badge badge-pill badge-danger" onclick="{ remove }">Удалить</a>
                             <a href="#" class="badge badge-pill badge-warning" onclick="{ rename }">Переименовать</a>
                         </div>
                     </div>
 
+                    <!-- смонтировать тэг product-table.riot -->
                     <div is="product-table" db="{ database[currentIndex].db }" save="{ saveAndUpdate }"></div>
                 </div>
+                <!-- если текущая таблица не выбрана, показать -->
                 <h2 if="{ currentIndex === null }">Выберите таблицу из панели слева или создайте там же новую</h2>
             </main>
         </div>
@@ -41,61 +49,59 @@
     <script>
         import ProductTable from "./product-table.riot";
         export default {
-            components: {
+            components: { // используемый компонент
                 ProductTable
             },
-            onBeforeMount(){
+            onBeforeMount(){ // выполняется при открытии страницы
                 this.load();
                 this.currentIndex = null;
             },
-            save(){
+            save(){ // сохранить сериализованный массив(БД) в локальное хранилище
                 localStorage.setItem('db', JSON.stringify(this.database));
             },
-            saveAndUpdate(){
+            saveAndUpdate(){ // вспомогательная функция, сохраняет и обновляет
                 this.save();
                 this.update();
             },
-            load(){
+            load(){ // функция загрузки сериализованного массива(БД) и присваивание в database
                 try {
                     this.database = JSON.parse(localStorage.getItem('db') || "");
                     return true;
                 } catch {
-                    this.database = [];
+                    this.database = []; // пустое значение, если что-то пошло не так, или же пользователь зашёл впервые
                 }
-                this.save();
+                this.save(); // сохраняем в случае обнуления database
                 return false;
             },
 
-            add(e){
-                this.database.push({name: "Untitled", db: []});
-                this.nameEditing = false;
-                this.currentIndex = this.database.length - 1;
-                this.saveAndUpdate();
+            add(e){ // функция вызывается при нажатии на "+" в панели навигации
+                this.database.push({name: "Untitled", db: []}); // добавляется новая таблица с именем Untitled
+                this.nameEditing = false; // выход из режима редактирования имени, если были в нём
+                this.currentIndex = this.database.length - 1; // переключаемся на новую таблицу
+                this.saveAndUpdate(); // сохраняем, обновляем
             },
-            select(e){
-                this.currentIndex = Number(e.target.dataset.num);
-                this.nameEditing = false;
-                //console.log(this.database[this.currentIndex].db);
-
-                this.update();
+            select(e){ // вызывается при нажатии на имя таблицы в списке навигации
+                this.currentIndex = Number(e.target.dataset.num); // устанавливаем "текущий" номер в записанный в элементе
+                this.nameEditing = false; // выходим из режима редактирования имени, если были в нём
+                this.update(); // обновляем
             },
-            nameEditing: false,
-            rename(e){
-                this.nameEditing = true;
-                this.update();
+            nameEditing: false, // инициализационное значения показателя режима редактирования имени таблицы
+            rename(e){ // вызывается при нажатии на label "Переименовать"
+                this.nameEditing = true; // заходим в режим редактирования имени
+                this.update(); // обновляем
             },
-            renameInput(e){
-                if(e.which === 13){
-                    this.database[this.currentIndex].name = e.target.value;
-                    this.nameEditing = false;
-                    this.saveAndUpdate();
+            renameInput(e){ // вызывается при нажатии на клавиатуру в поле переименования таблицы
+                if(e.which === 13){ // если клавиша - enter
+                    this.database[this.currentIndex].name = e.target.value; // записываем введённое в поле имя
+                    this.nameEditing = false; // выходим из режима редактирования имени
+                    this.saveAndUpdate(); // сохраняем, обновляем
                 }
             },
-            remove(e){
-                this.database.splice(this.currentIndex, 1);
-                this.currentIndex = Math.min(this.currentIndex, this.database.length-1);
-                this.nameEditing = false;
-                this.saveAndUpdate();
+            remove(e){ // вызывается при нажатии на label "Удалить"
+                this.database.splice(this.currentIndex, 1); // удаляем текущую таблицу
+                this.currentIndex = Math.min(this.currentIndex, this.database.length-1); // устанавливаем текущую в последнюю существующую, если удалили последнюю
+                this.nameEditing = false; // выходим из режима редактирования, если были в нём
+                this.saveAndUpdate(); //сохраняем, обновляем
             }
         }
     </script>
