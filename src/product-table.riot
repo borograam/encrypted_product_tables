@@ -40,7 +40,7 @@
         <div class="col-2 p-3" is="cell" note="{ item }" item="count" input="{ countInputAttrs }"
              save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
         <div class="col-2 p-3">{ showCurrency(item.cost) }
-            <button type="button" class="close mr-n5" onclick="{ remove }"><span data-num="{ i }">&times;</span></button>
+            <button type="button" class="close" onclick="{ remove }"><span data-num="{ i }">&times;</span></button>
         </div>
         <hr>
     </div>
@@ -51,7 +51,7 @@
             <div class="col-2"><input name="count" { ...countInputAttrs }></div>
             <div class="col-2">
                 <button type="submit" class="btn btn-outline-primary">Добавить</button>
-                <button type="button" class="close mr-n5" onclick="{ disableAddMode }"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" onclick="{ disableAddMode }"><span aria-hidden="true">&times;</span></button>
             </div>
         </div>
     </form>
@@ -90,11 +90,13 @@
             },
             onBeforeMount(props, state){
                 //this.database = [{name: 1, price: 2, count: 3}];
-                this.load();
+                //this.load();
                 this.addMode = false;
+                this.database = this.props.db;
             },
             onBeforeUpdate(){
                 // calculateCosts ?
+                this.database = this.props.db;
             },
 
             add(e){
@@ -132,26 +134,11 @@
             },
 
             calculateCosts(){
-                // TODO: Math.round
                 for(let item of this.database) item.cost = item.price * item.count;
             },
-            save(){
-                this.calculateCosts();
-                localStorage.setItem('db', JSON.stringify(this.database));
-            },
             saveAndUpdate(){
-                this.save();
-                this.update();
-            },
-            load(){
-                try {
-                    this.database = JSON.parse(localStorage.getItem('db') || "");
-                    return true;
-                } catch {
-                    this.database = [];
-                }
-                this.save();
-                return false;
+                this.calculateCosts();
+                this.props.save();
             },
 
             showCurrency(n){ // the same one in cell and report

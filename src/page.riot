@@ -1,0 +1,102 @@
+<page>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <h6 class="sidebar-heading px-3 mt-3 mb-1 text-muted">Таблицы</h6>
+                    <ul class="nav flex-column nav-pills">
+                        <li class="nav-item" each="{ (item, i) in database }"> <!-- each -->
+                            <a class="{ `nav-link ${i === currentIndex ? 'active' : ''}`}" href="#" onclick="{ select }" data-num="{ i }">
+                                { item.name }
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="{ add }">+</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <main class="col-md-9">
+                <div if="{ currentIndex !== null }">
+                    <div class="mb-4 row ">
+                        <a if="{ !nameEditing }" class="h1 col-lg-9">{ database[currentIndex].name }</a>
+                        <div if="{ nameEditing }" class="h1 col-lg-9">
+                            <input type="text" class="form-control" autocomplete="off" onkeyup="{ renameInput }" value="{ database[currentIndex].name }">
+                        </div>
+
+                        <div class="col-lg-3 h4 d-flex flex-row-reverse align-items-center">
+                            <a href="#" class="badge badge-pill badge-danger" onclick="{ remove }">Удалить</a>
+                            <a href="#" class="badge badge-pill badge-warning" onclick="{ rename }">Переименовать</a>
+                        </div>
+                    </div>
+
+                    <div is="product-table" db="{ database[currentIndex].db }" save="{ saveAndUpdate }"></div>
+                </div>
+                <h2 if="{ currentIndex === null }">Выберите таблицу из панели слева или создайте там же новую</h2>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        import ProductTable from "./product-table.riot";
+        export default {
+            components: {
+                ProductTable
+            },
+            onBeforeMount(){
+                this.load();
+                this.currentIndex = null;
+            },
+            save(){
+                localStorage.setItem('db', JSON.stringify(this.database));
+            },
+            saveAndUpdate(){
+                this.save();
+                this.update();
+            },
+            load(){
+                try {
+                    this.database = JSON.parse(localStorage.getItem('db') || "");
+                    return true;
+                } catch {
+                    this.database = [];
+                }
+                this.save();
+                return false;
+            },
+
+            add(e){
+                this.database.push({name: "Untitled", db: []});
+                this.nameEditing = false;
+                this.currentIndex = this.database.length - 1;
+                this.saveAndUpdate();
+            },
+            select(e){
+                this.currentIndex = Number(e.target.dataset.num);
+                this.nameEditing = false;
+                //console.log(this.database[this.currentIndex].db);
+
+                this.update();
+            },
+            nameEditing: false,
+            rename(e){
+                this.nameEditing = true;
+                this.update();
+            },
+            renameInput(e){
+                if(e.which === 13){
+                    this.database[this.currentIndex].name = e.target.value;
+                    this.nameEditing = false;
+                    this.saveAndUpdate();
+                }
+            },
+            remove(e){
+                this.database.splice(this.currentIndex, 1);
+                this.currentIndex = Math.min(this.currentIndex, this.database.length-1);
+                this.nameEditing = false;
+                this.saveAndUpdate();
+            }
+        }
+    </script>
+</page>
