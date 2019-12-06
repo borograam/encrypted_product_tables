@@ -1,43 +1,46 @@
-<sorter class="{ props.class }" onclick="{ changeSortMode }">
-    <slot/>
-    <span if="{ sortMode === 1 }">&#9660;</span>
-    <span if="{ sortMode === 2 }">&#9650;</span>
+<sorter class="{ props.class }" onclick="{ changeSortMode }"> <!-- При нажатии вызывается changeSortMode -->
+    <slot/> <!-- Вставить название, описанное в product-table.riot при монтировании -->
+    <span if="{ sortMode === 1 }">&#9660;</span> <!-- При сортировке по возрастанию показать стрелку вниз -->
+    <span if="{ sortMode === 2 }">&#9650;</span> <!-- При сортировке по убыванию показать стрелку вверх -->
     <script>
         export default {
             sortMode: 0,
             changeSortMode(e){
-                e.preventDefault();
-                //console.log(`sorter onclick from ${this.props.field}`);
-                //console.log(e);
+                e.preventDefault(); // говорим браузеру ничего не делать
+                // превращение sortMode. 0 -> 1, 1 -> 2, 2 -> 1
                 this.sortMode = (this.sortMode % 2) + 1;
-                //console.log(this.sortMode);
 
-                let header = document.getElementById("table-header");
+                let header = document.getElementById("table-header"); // обращаемся к table-header
+                // если ранее сортировкой пользовались в другом столбце, очистить "треугольник" там
                 if(header.riotClean && header.riotClean.root !== this.root) header.riotClean.func();
 
-                if(this.sortMode === 0) this.update();
-                else {
-                    header.riotClean = {root: this.root, func: e => { this.sortMode = 0; }};
-                    if(this.sortMode === 1) this.sort();
-                    else this.sort(-1);
-                }
+                //if(this.sortMode === 0) this.update();
+                //else {
+                //задел на будущее: возможно, это вызовет другой sorter
+                header.riotClean = {root: this.root, func: e => { this.sortMode = 0; }};
+                if(this.sortMode === 1) this.sort();
+                else this.sort(-1);
+                //}
                 return false;
             },
             sort(multiplyCompare=1){
-                //console.log("DB: ", this.props.db);
+                // переданная извне функция трансформации
                 let transform = this.props.transformFunc || (a => a);
+                // переданная извне функция сравнения
                 let compare = this.props.compareFunc;
 
+                // временный массив, хранящий сортируемые значения и изначальную позицию в массиве(БД)
                 let temp = this.props.db
                     .map((row, i) => ({value: transform(row[this.props.field]), i}));
+                // сортировка (прямая или обратная)
                 temp.sort((a, b) => multiplyCompare * compare(a.value, b.value));
-                //console.log(temp);
 
-                let pointerKeeper = [];
+                let pointerKeeper = []; // массив для хранения ссылок на объекты-элементы БД
                 for(let i in this.props.db) pointerKeeper[i] = this.props.db[i];
+                // восстановление отсортированного массива(БД) из сохранённых ссылок и позиций отсортированного временного массива
                 for(let i in this.props.db) this.props.db[i] = pointerKeeper[temp[i].i];
 
-                this.props.save();
+                this.props.save(); // сохранение
             }
         }
     </script>

@@ -1,26 +1,29 @@
 <filter>
-    <div class="form-group row">
-        <label for="filter" class="col-2 control-label">Поиск:</label>
-        <div class="col-8">
+    <div class="form-group row"> <!-- строка во всю ширину -->
+        <label for="filter" class="col-2 control-label">Поиск:</label> <!-- соотносим текст с полем ввода -->
+        <div class="col-8"> <!-- контейнер шириной 8/12 для поля ввода -->
+            <!-- при вводе в поле вызывается функция "filter" -->
             <input id="filter" type="text" placeholder="Введите для фильтрации по названию" class="form-control" oninput="{ filter }">
         </div>
+        <!-- монтируем тэг report.riot, передаём ей массив (БД) -->
         <div is="report" db="{ props.db }" class="col-2"></div>
     </div>
 
     <script>
         export default {
-            showAll(){
-                this.props.db.forEach(item => { item.show = true; })
+            showAll(){ // вспомогательная функция. Выставляет всем статус "показываться в таблице"
+                this.props.db.forEach(item => { item.show = true; });
             },
-            onBeforeMount(){
+            onBeforeMount(){ // в момент открытия страницы показываем все элементы
                 this.showAll();
             },
-            filter(e){
-                let find = e.target.value.toLowerCase();
-                //console.log(find);
-                if(find === "") this.showAll();
+            filter(e){ // вызывается при вводе текста в поле ввода
+                let find = e.target.value.toLowerCase(); // вытаскиваем из поля введённое значение, преобразуем к нижнему регистру
+                if(find === "") this.showAll(); // если поле поиска пустое, показываем все элементы
+                    // иначе элементам стоит показываться, если они включают подстроку из того, что введено в поле поиска
                 else this.props.db.forEach(item => { item.show = item.name.toLowerCase().includes(find); });
-                this.props.save();
+
+                this.props.save(); // сохраняем
             }
         }
     </script>
