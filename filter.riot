@@ -17,7 +17,7 @@
             },
             filter(e){
                 let find = e.target.value.toLowerCase();
-                console.log(find);
+                //console.log(find);
                 if(find === "") this.showAll();
                 else this.props.db.forEach(item => { item.show = item.name.toLowerCase().includes(find); });
                 this.props.save();

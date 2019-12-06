@@ -1,6 +1,6 @@
 <cell>
-    <div if="{ !editMode }" onclick="{ toggleEditMode }">{ props.note[props.item] }</div>
-    <input if="{ editMode }" {...props.input} value="{ props.note[props.item] }" onkeyup="{ keyUp }"/>
+    <div if="{ !editMode }" onclick="{ toggleEditMode }">{ value }</div>
+    <input if="{ editMode }" {...props.input} value="{ value }" onkeyup="{ keyUp }"/>
 
 
     <script>
@@ -12,11 +12,26 @@
             },
             keyUp(e){
                 if(e.which === 13 && e.target.validity.valid){
-                    this.props.note[this.props.item] = e.target.value;
-                    // may be there call some "save" function from table? we must call parent update here....
+                    let value = e.target.value;
+                    if(this.props.item === "count"){
+                        value = Number(value);
+                    } else if(this.props.item === "price"){
+                        value = Math.round(Number(value.replace(",", "."))*100);
+                    }
+                    this.props.note[this.props.item] = value;
                     this.props.save();
                     this.toggleEditMode();
                 }
+            },
+            showCurrency(n){
+                return `${parseInt(n/100)}${n%100 ? `.${n%100}` : ""}`;
+            },
+            onBeforeUpdate(){
+                this.value = this.props.note[this.props.item];
+                if(this.props.item === "price") this.value = this.showCurrency(this.value);
+            },
+            onBeforeMount(){
+                this.onBeforeUpdate();
             }
         }
     </script>

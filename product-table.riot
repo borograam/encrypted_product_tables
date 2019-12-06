@@ -39,7 +39,7 @@
              save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
         <div class="col-2 p-3" is="cell" note="{ item }" item="count" input="{ countInputAttrs }"
              save="{ saveAndUpdate }" onclick="{ disableAddMode }"></div>
-        <div class="col-2 p-3">{ item.cost }
+        <div class="col-2 p-3">{ showCurrency(item.cost) }
             <button type="button" class="close mr-n5" onclick="{ remove }"><span data-num="{ i }">&times;</span></button>
         </div>
         <hr>
@@ -100,9 +100,10 @@
                         el.value = "";
                         return obj;
                     }).reduce((a,b) => Object.assign(a,b), {});
-                note.price = note.price.replace(",", ".");
+                note.price = Math.round(Number(note.price.replace(",", "."))*100);
+                note.count = Number(note.count);
                 note.show = true;
-                console.log(note);
+                //console.log(note);
                 this.database.push(note);
                 e.target.name.focus();
 
@@ -144,7 +145,11 @@
                 }
                 this.save();
                 return false;
-            }
+            },
+
+            showCurrency(n){ // the same one in cell and report
+                return `${parseInt(n/100)}${n%100 ? `.${n%100}` : ""}`;
+            },
         }
     </script>
 </product-table>
