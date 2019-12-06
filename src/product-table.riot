@@ -61,7 +61,14 @@
 
 
     <script>
+        import Sorter from "./sorter.riot";
+        import Filter from "./filter.riot";
+        import Cell from "./cell.riot";
+
         export default {
+            components: {
+                Sorter, Filter, Cell
+            },
             nameInputAttrs: {
                 type: "text",
                 class: "form-control",

@@ -8,7 +8,11 @@
     </div>
 
     <script>
+        import Report from "./report.riot";
         export default {
+            components: {
+                Report
+            },
             showAll(){
                 this.props.db.forEach(item => { item.show = true; })
             },
