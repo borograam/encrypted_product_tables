@@ -38,7 +38,7 @@
                     </div>
 
                     <!-- смонтировать тэг product-table.riot -->
-                    <div is="product-table" db="{ database[currentIndex].db }" save="{ saveAndUpdate }"></div>
+                    <div is="product-table" db="{ database[currentIndex].db }" save="{ props.save }"></div>
                 </div>
                 <!-- если текущая таблица не выбрана, показать -->
                 <h2 if="{ currentIndex === null }">Выберите таблицу из панели слева или создайте там же новую</h2>
@@ -52,33 +52,15 @@
             components: { // используемый компонент
                 ProductTable
             },
-            onBeforeMount(){ // выполняется при открытии страницы
-                this.load();
-                this.currentIndex = null;
+            currentIndex: null,
+            onBeforeMount(){
+                this.database = this.props.db;
             },
-            save(){ // сохранить сериализованный массив(БД) в локальное хранилище
-                localStorage.setItem('db', JSON.stringify(this.database));
-            },
-            saveAndUpdate(){ // вспомогательная функция, сохраняет и обновляет
-                this.save();
-                this.update();
-            },
-            load(){ // функция загрузки сериализованного массива(БД) и присваивание в database
-                try {
-                    this.database = JSON.parse(localStorage.getItem('db') || "");
-                    return true;
-                } catch {
-                    this.database = []; // пустое значение, если что-то пошло не так, или же пользователь зашёл впервые
-                }
-                this.save(); // сохраняем в случае обнуления database
-                return false;
-            },
-
             add(e){ // функция вызывается при нажатии на "+" в панели навигации
                 this.database.push({name: "Untitled", db: []}); // добавляется новая таблица с именем Untitled
                 this.nameEditing = false; // выход из режима редактирования имени, если были в нём
                 this.currentIndex = this.database.length - 1; // переключаемся на новую таблицу
-                this.saveAndUpdate(); // сохраняем, обновляем
+                this.props.save(); // сохраняем, обновляем
             },
             select(e){ // вызывается при нажатии на имя таблицы в списке навигации
                 this.currentIndex = Number(e.target.dataset.num); // устанавливаем "текущий" номер в записанный в элементе
@@ -94,14 +76,14 @@
                 if(e.which === 13){ // если клавиша - enter
                     this.database[this.currentIndex].name = e.target.value; // записываем введённое в поле имя
                     this.nameEditing = false; // выходим из режима редактирования имени
-                    this.saveAndUpdate(); // сохраняем, обновляем
+                    this.props.save(); // сохраняем, обновляем
                 }
             },
             remove(e){ // вызывается при нажатии на label "Удалить"
                 this.database.splice(this.currentIndex, 1); // удаляем текущую таблицу
                 this.currentIndex = Math.min(this.currentIndex, this.database.length-1); // устанавливаем текущую в последнюю существующую, если удалили последнюю
                 this.nameEditing = false; // выходим из режима редактирования, если были в нём
-                this.saveAndUpdate(); //сохраняем, обновляем
+                this.props.save(); //сохраняем, обновляем
             }
         }
     </script>

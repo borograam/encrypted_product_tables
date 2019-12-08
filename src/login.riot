@@ -1,0 +1,103 @@
+<login>
+    <div if="{ !database }" id="login-form-container"> <!-- форма логина, если мы не залогинены (database === null) -->
+        <form class="form-signin" onsubmit="{ signIn }"> <!-- при заполнении формы вызываем signIn -->
+            <h1 class="h3 mb-3 font-weight-normal text-center">Пожалуйста, авторизуйтесь</h1>
+            <div if="{ incorrectPassword }" class="alert alert-danger" role="alert"> <!-- показывается только при incorrectPassword -->
+                Неправильный пароль
+            </div>
+            <label for="inputLogin" class="sr-only">Логин</label>
+            <!-- поле ввода логина -->
+            <input name="login" type="text" id="inputLogin" class="form-control" placeholder="Логин" required autofocus autocomplete="off">
+            <label for="inputPassword" class="sr-only">Password</label>
+            <!-- поле ввода пароля -->
+            <input name="password" type="password" id="inputPassword" class="form-control mb-3" placeholder="Пароль" required>
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Войти</button>
+        </form>
+    </div>
+
+    <div if="{ database }"> <!-- показываем только если залогинены -->
+        <div class="row mb-3 flex-row-reverse"> <!-- контейнер шириной 3/12 справа -->
+            <div class="col-2">
+                <!-- черная кнопка "Выйти". При нажатии вызывается signOut -->
+                <button class="btn btn-block btn-outline-dark" onclick="{ signOut }">Выйти</button>
+            </div>
+        </div>
+        <!-- монтирование тэга product-table.riot -->
+        <page db="{ database }" save="{ saveAndUpdate }"/>
+    </div>
+
+    <script>
+        import Page from "./page.riot";
+        import "./login-form.css"; // подключение стилей для формы логина
+        export default {
+            components: { // используемый компонент
+                Page
+            },
+            incorrectPassword: false, // флаг отображения алерта "неправильный пароль"
+            database: null, // тут будет расшифрованая текущая таблица
+            aes: require("crypto-js/aes"), // библиотека AES шифрования
+            sha256: require("crypto-js/sha256"), // функция SHA256 хеширования
+            utf8: require("crypto-js/enc-utf8"), // вспомогательный объект для расшифровки
+            hashedLogin: null, // хешированный логин залогиненного юзера (используется в функции save)
+            hashedPassword: null, // хешированный пароль залогиненного юзера
+            onBeforeMount(){ // вызывается при загрузке страницы
+                this.load();
+            },
+            signIn(e){ // вызывается при попытке залогиниться
+                e.preventDefault(); // прекращаем последующую обработку события
+                let login = e.target.login.value, // логин из поля логина формы
+                    password = e.target.password.value; // пароль их поля пароля формы
+                this.hashedLogin = this.sha256(login).toString(); // хеш логина (глобальная переменная)
+                this.hashedPassword = this.sha256(password).toString(); // хеш пароля (глобальная переменная)
+                let cryptedTable = null; // переменная, в которую положим шифрованную таблицу
+                for(let key in this.cryptedDB) if(key === this.hashedLogin) { // цикл по всем юзерам. Если нашёлся, то
+                    cryptedTable = this.cryptedDB[key]; // кладём в cryptedTable его шифрованную таблицу
+                    break; // прекращаем последующий проход по юзерам
+                }
+                if(cryptedTable === null){ // если таблица не найдена = юзер не зарегестрирован
+                    this.database = []; // устанавливаем начальное значение его массива(БД) таблицы
+                    this.save(); // сохраняем в память (шифруем)
+                    this.incorrectPassword = false; // устанавливаем для того, чтобы после "Выйти" точно не показывался "неправильный пароль"
+                } else { // если юзер зарегестрирован
+                    try {
+                        // расшифровываем таблицу хешем его пароля
+                        this.database = JSON.parse(this.aes.decrypt(cryptedTable, this.hashedPassword).toString(this.utf8));
+                        // успешно (иначе ушли бы в обработчик ошибок).
+                        this.incorrectPassword = false; // устанавливаем для того, чтобы после "Выйти" точно не показывался "неправильный пароль"
+                    } catch { // расшифровать не вышло - неправильный пароль
+                        this.incorrectPassword = true; // устанавливаем для отображения "неправильный пароль"
+                    }
+                }
+                this.update(); // обновляем состояние тэга
+                return false; // запрещаем браузеру обрабатывать дальше форму
+            },
+            signOut(e){ // вызывается при нажатии на кнопку "Выйти"
+                // обнуляем все используемые глобальные переменные
+                this.hashedPassword = this.hashedLogin = this.database = null;
+                this.update();
+            },
+            saveAndUpdate(){ // вспомогательная функция. Сохранить и обновить
+                this.save();
+                this.update();
+            },
+            save(){ // функция сохранения текущего массива (БД) в память
+                /*1. сериализуем массив(БД), содержащий данные таблицы
+                * 2. шифруем это хешем пароля данного юзера
+                * 3. кладём результат по ключу "хеш логина" в хранилище */
+                this.cryptedDB[this.hashedLogin] = this.aes.encrypt(JSON.stringify(this.database), this.hashedPassword).toString();
+                // сериализуем и сохраняем текущее состояние хранилища
+                localStorage.setItem('db', JSON.stringify(this.cryptedDB));
+            },
+            load(){ // функция загрузки сериализованного объекта(БД) из хранилища в глобальную переменную cryptedDB
+                try {
+                    this.cryptedDB = JSON.parse(localStorage.getItem('db') || "");
+                    return true;
+                } catch { // если пользователь не имеет записи в хранилище или у него там что-то поломаное
+                    this.cryptedDB = {};
+                    localStorage.setItem('db', '{}');
+                }
+                return false;
+            },
+        }
+    </script>
+</login>
