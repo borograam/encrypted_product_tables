@@ -10,7 +10,11 @@
     </div>
 
     <script>
+        import Report from "./report.riot";
         export default {
+            components: {
+                Report
+            },
             showAll(){ // вспомогательная функция. Выставляет всем статус "показываться в таблице"
                 this.props.db.forEach(item => { item.show = true; });
             },

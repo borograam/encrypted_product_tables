@@ -1,0 +1,34 @@
+{
+  "name": "kurs",
+  "version": "1.0.0",
+  "description": "kursach",
+  "main": "index.js",
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "crypto-js": "^3.1.9-1",
+    "css-loader": "^3.2.1",
+    "jquery": "^3.4.1",
+    "popper.js": "^1.16.0",
+    "riot": "^4.7.0",
+    "style-loader": "^1.0.1",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "devDependencies": {
+    "@riotjs/compiler": "^4.5.2",
+    "@riotjs/webpack-loader": "^4.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rodriguez5324/kursach.git"
+  },
+  "author": "Andrew Rodriguez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rodriguez5324/kursach/issues"
+  },
+  "homepage": "https://github.com/rodriguez5324/kursach#readme"
+}

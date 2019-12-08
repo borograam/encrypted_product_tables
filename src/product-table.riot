@@ -68,7 +68,13 @@
 
 
     <script>
+        import Sorter from "./sorter.riot";
+        import Filter from "./filter.riot";
+        import Cell from "./cell.riot";
         export default {
+            components: { // используемые в данном тэге компоненты
+                Sorter, Filter, Cell
+            },
             nameInputAttrs: { // атрибуты для поля ввода первого столбца (для cell.riot и режима добавления)
                 type: "text",
                 class: "form-control",
@@ -89,8 +95,12 @@
                 autocomplete: "off"
             },
             onBeforeMount(props, state){ // вызывается перед первым появлением (загрузка страницы)
-                this.load(); // описана ниже. Загружает БД из памяти
+                //this.load(); // описана ниже. Загружает БД из памяти
                 this.addMode = false; // устанавливаем режим добаления в выключенный
+                this.onBeforeUpdate();
+            },
+            onBeforeUpdate(){
+                this.database = this.props.db;
             },
 
             add(e){ // вызывается при onsubmit на форме в режиме добавления
@@ -131,23 +141,10 @@
                 for(let item of this.database) item.cost = item.price * item.count;
                 // каждому элементу массива (БД) посчитать стоимость как произведение цены на количество.
             },
-            save(){ // функция сохранения текущего массива (БД) в память
-                this.calculateCosts(); // перед сохранением перерасчитаем стоимости товаров
-                localStorage.setItem('db', JSON.stringify(this.database)); // сериализуем и сохраняем в локальное хранилище
-            },
+
             saveAndUpdate(){ // вспомогательная функция, вызывающая подряд функции сохранения и обновления тэга
-                this.save();
-                this.update();
-            },
-            load(){ // функция загрузки сериализованного массива (БД) из хранилища в текущую переменную database
-                try {
-                    this.database = JSON.parse(localStorage.getItem('db') || "");
-                    return true;
-                } catch { // если пользователь не имеет записи в хранилище или у него там что-то поломаное
-                    this.database = [];
-                }
-                this.save(); // сохраняем базу, если она была обнулена
-                return false;
+                this.calculateCosts(); // перед сохранением перерасчитаем стоимости товаров
+                this.props.save();
             },
 
             showCurrency(n){ // превращение копеек в рубли. Такое же есть в cell.riot и почти такое же в report.riot
